@@ -1,1 +1,0 @@
-../../../TUIChat/TUIChat/UI/Base/Camera/TUIMotionManager.h

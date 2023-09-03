@@ -1,1 +1,0 @@
-../../../TUICore/TUICore/TUITool.h

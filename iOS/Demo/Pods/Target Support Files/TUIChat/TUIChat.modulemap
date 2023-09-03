@@ -1,6 +1,0 @@
-module TUIChat {
-  umbrella header "TUIChat-umbrella.h"
-
-  export *
-  module * { export * }
-}
