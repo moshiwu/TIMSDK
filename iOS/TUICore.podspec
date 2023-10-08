@@ -22,6 +22,8 @@ Pod::Spec.new do |spec|
 
   spec.dependency 'ReactiveObjC'
   spec.dependency 'SDWebImage'
+  spec.dependency 'GamaUICommon'
+  spec.dependency 'Masonry'
   
   spec.subspec 'ImSDK_Plus' do |ss|
       ss.dependency 'TXIMSDK_Plus_iOS','7.4.4643'

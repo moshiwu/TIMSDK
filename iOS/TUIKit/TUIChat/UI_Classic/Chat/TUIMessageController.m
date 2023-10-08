@@ -2,28 +2,27 @@
 //  Created by Tencent on 2023/06/09.
 //  Copyright © 2023 Tencent. All rights reserved.
 
-#import "TUIMessageController.h"
-#import <TIMCommon/TIMDefine.h>
-#import <TUICore/TUIGlobalization.h>
-#import <TUICore/TUIThemeManager.h>
-#import <TUICore/UIView+TUILayout.h>
-#import "ReactiveObjC.h"
 #import "TUIBaseMessageController+ProtectedAPI.h"
 #import "TUIChatConfig.h"
 #import "TUIChatModifyMessageHelper.h"
-#import "TUIChatSmallTongueView.h"
+#import "TUIMessageController.h"
 #import "TUIMessageSearchDataProvider.h"
 #import "TUIReferenceMessageCell.h"
 #import "TUIReplyMessageCell.h"
 #import "TUIReplyMessageCellData.h"
 #import "TUITextMessageCell.h"
 
+#import <ReactiveObjC/ReactiveObjC.h>
+#import <TIMCommon/TIMDefine.h>
+#import <TUICore/TUIGlobalization.h>
+#import <TUICore/TUIThemeManager.h>
+#import <TUICore/UIView+TUILayout.h>
+
 #define MSG_GET_COUNT 20
 
-@interface TUIMessageController () <TUIChatSmallTongueViewDelegate>
+@interface TUIMessageController ()
 @property(nonatomic, strong) UIActivityIndicatorView *bottomIndicatorView;
 @property(nonatomic, assign) uint64_t locateGroupMessageSeq;
-@property(nonatomic, strong) TUIChatSmallTongueView *tongueView;
 @property(nonatomic, strong) NSMutableArray *receiveMsgs;
 @property(nonatomic, weak) UIImageView *backgroudView;
 @end
@@ -34,8 +33,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.bottomIndicatorView =
-        [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, TMessageController_Header_Height)];
+    self.bottomIndicatorView = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, TMessageController_Header_Height)];
     self.bottomIndicatorView.activityIndicatorViewStyle = UIActivityIndicatorViewStyleGray;
     self.tableView.tableFooterView = self.bottomIndicatorView;
 
@@ -43,29 +41,12 @@
 
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(keyboardWillShow) name:UIKeyboardWillShowNotification object:nil];
 
-    if (self.conversationData.atMsgSeqs.count > 0) {
-        TUIChatSmallTongue *tongue = [[TUIChatSmallTongue alloc] init];
-        tongue.type = TUIChatSmallTongueType_SomeoneAtMe;
-        tongue.atMsgSeqs = [self.conversationData.atMsgSeqs copy];
-        [TUIChatSmallTongueManager showTongue:tongue delegate:self];
-    }
     self.receiveMsgs = [NSMutableArray array];
 }
 
 - (void)dealloc {
-    [TUIChatSmallTongueManager removeTongue];
     [NSNotificationCenter.defaultCenter removeObserver:self];
     NSLog(@"%s dealloc", __FUNCTION__);
-}
-
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-    [TUIChatSmallTongueManager hideTongue:NO];
-}
-
-- (void)viewWillDisappear:(BOOL)animated {
-    [super viewWillDisappear:animated];
-    [TUIChatSmallTongueManager hideTongue:YES];
 }
 
 #pragma mark - Notification
@@ -80,11 +61,11 @@
 
 #pragma mark - Overrider
 - (void)willShowMediaMessage:(TUIMessageCell *)cell {
-    [TUIChatSmallTongueManager hideTongue:YES];
+
 }
 
 - (void)didCloseMediaMessage:(TUIMessageCell *)cell {
-    [TUIChatSmallTongueManager hideTongue:NO];
+
 }
 
 #pragma mark - UIScrollViewDelegate
@@ -108,31 +89,9 @@
                 [self.bottomIndicatorView startAnimating];
             }
         }
-        /**
-         * 去掉 "回到最新位置", "xxx条新消息" 小舌头
-         * Remove the "back to the latest position", "xxx new message" bottom-banner-tips
-         */
-        if (self.isInVC) {
-            [TUIChatSmallTongueManager removeTongue:TUIChatSmallTongueType_ScrollToBoom];
-            [TUIChatSmallTongueManager removeTongue:TUIChatSmallTongueType_ReceiveNewMsg];
-        }
     } else if (self.isInVC && 0 == self.receiveMsgs.count && self.tableView.contentSize.height - self.tableView.contentOffset.y >= Screen_Height * 2.0) {
         CGPoint point = [scrollView.panGestureRecognizer translationInView:scrollView];
-        /**
-         * 下滑的时候，添加 "回到最新位置" 小舌头
-         * When swiping, add a "back to last position" bottom-banner-tips
-         */
-        if (point.y > 0) {
-            TUIChatSmallTongue *tongue = [[TUIChatSmallTongue alloc] init];
-            tongue.type = TUIChatSmallTongueType_ScrollToBoom;
-            [TUIChatSmallTongueManager showTongue:tongue delegate:self];
-        }
     } else if (self.isInVC && self.tableView.contentSize.height - self.tableView.contentOffset.y >= 20) {
-        /**
-         * 去掉 "有人 @ 我" 小舌头
-         * Remove the "someone @ me" bottom-banner-tips
-         */
-        [TUIChatSmallTongueManager removeTongue:TUIChatSmallTongueType_SomeoneAtMe];
     } else {
         if (self.indicatorView.isAnimating) {
             [self.indicatorView stopAnimating];
@@ -470,10 +429,6 @@
      */
     if (self.isInVC && self.tableView.contentSize.height - self.tableView.contentOffset.y >= Screen_Height * 2.0) {
         [self.receiveMsgs addObject:uiMsg];
-        TUIChatSmallTongue *tongue = [[TUIChatSmallTongue alloc] init];
-        tongue.type = TUIChatSmallTongueType_ReceiveNewMsg;
-        tongue.unreadMsgCount = self.receiveMsgs.count;
-        [TUIChatSmallTongueManager showTongue:tongue delegate:self];
     }
 
     if (self.isInVC) {
@@ -489,14 +444,6 @@
     [super dataProvider:dataProvider ReceiveRevokeUIMsg:uiMsg];
     if ([self.receiveMsgs containsObject:uiMsg]) {
         [self.receiveMsgs removeObject:uiMsg];
-        TUIChatSmallTongue *tongue = [[TUIChatSmallTongue alloc] init];
-        tongue.type = TUIChatSmallTongueType_ReceiveNewMsg;
-        tongue.unreadMsgCount = self.receiveMsgs.count;
-        if (tongue.unreadMsgCount != 0) {
-            [TUIChatSmallTongueManager showTongue:tongue delegate:self];
-        } else {
-            [TUIChatSmallTongueManager removeTongue:TUIChatSmallTongueType_ReceiveNewMsg];
-        }
     }
 
     /*
@@ -519,41 +466,6 @@
                       [[TUIChatModifyMessageHelper defaultHelper] modifyMessage:message revokeMsgID:revokeMsgID];
                   }
                 }];
-    }
-}
-
-#pragma mark - TUIChatSmallTongueViewDelegate
-- (void)onChatSmallTongueClick:(TUIChatSmallTongue *)tongue {
-    switch (tongue.type) {
-        case TUIChatSmallTongueType_ScrollToBoom: {
-            [self scrollToBottom:YES];
-        } break;
-        case TUIChatSmallTongueType_ReceiveNewMsg: {
-            [TUIChatSmallTongueManager removeTongue:TUIChatSmallTongueType_ReceiveNewMsg];
-            TUIMessageCellData *cellData = self.receiveMsgs.firstObject;
-            if (cellData) {
-                self.locateMessage = cellData.innerMessage;
-                [self scrollLocateMessage:NO];
-                [self highlightKeyword];
-            }
-            [self.receiveMsgs removeAllObjects];
-        } break;
-        case TUIChatSmallTongueType_SomeoneAtMe: {
-            [TUIChatSmallTongueManager removeTongue:TUIChatSmallTongueType_SomeoneAtMe];
-            [self.conversationData.atMsgSeqs removeAllObjects];
-            ;
-            self.locateGroupMessageSeq = [tongue.atMsgSeqs.firstObject integerValue];
-            for (TUIMessageCellData *cellData in self.messageDataProvider.uiMsgs) {
-                if ([self isLocateMessage:cellData]) {
-                    [self scrollLocateMessage:NO];
-                    [self highlightKeyword];
-                    return;
-                }
-            }
-            [self loadLocateMessages:NO];
-        } break;
-        default:
-            break;
     }
 }
 

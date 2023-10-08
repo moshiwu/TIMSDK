@@ -478,23 +478,23 @@
         TUIConversationCellData *data = [self.dataProvider.conversationList objectAtIndex:indexPath.row];
         [self tableViewFillCell:cell withData:data];
 
-        NSArray *extensionList =
-            [TUICore getExtensionList:TUICore_TUIConversationExtension_ConversationCellUpperRightCorner_ClassicExtensionID
-                                param:@{
-                                    TUICore_TUIConversationExtension_ConversationCellUpperRightCorner_GroupListKey : data.conversationGroupList ?: @[],
-                                    TUICore_TUIConversationExtension_ConversationCellUpperRightCorner_MarkListKey : data.conversationMarkList ?: @[],
-                                }];
-        if (extensionList.count > 0) {
-            TUIExtensionInfo *info = extensionList.firstObject;
-            if (info.text.length > 0) {
-                cell.timeLabel.text = info.text;
-            } else if (info.icon) {
-                NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
-                textAttachment.image = info.icon;
-                NSAttributedString *imageStr = [NSAttributedString attributedStringWithAttachment:textAttachment];
-                cell.timeLabel.attributedText = imageStr;
-            }
-        }
+//        NSArray *extensionList =
+//            [TUICore getExtensionList:TUICore_TUIConversationExtension_ConversationCellUpperRightCorner_ClassicExtensionID
+//                                param:@{
+//                                    TUICore_TUIConversationExtension_ConversationCellUpperRightCorner_GroupListKey : data.conversationGroupList ?: @[],
+//                                    TUICore_TUIConversationExtension_ConversationCellUpperRightCorner_MarkListKey : data.conversationMarkList ?: @[],
+//                                }];
+//        if (extensionList.count > 0) {
+//            TUIExtensionInfo *info = extensionList.firstObject;
+//            if (info.text.length > 0) {
+//                cell.timeLabel.text = info.text;
+//            } else if (info.icon) {
+//                NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
+//                textAttachment.image = info.icon;
+//                NSAttributedString *imageStr = [NSAttributedString attributedStringWithAttachment:textAttachment];
+//                cell.timeLabel.attributedText = imageStr;
+//            }
+//        }
     }
     return cell;
 }

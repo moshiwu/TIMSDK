@@ -10,7 +10,7 @@
 #import <TIMCommon/TIMCommonModel.h>
 #import <TUICore/TUIGlobalization.h>
 #import <TUICore/TUITool.h>
-#import "UIView+TUIToast.h"
+#import <TUICore/UIView+TUIToast.h>
 
 @implementation TUICommonPendencyCellData
 

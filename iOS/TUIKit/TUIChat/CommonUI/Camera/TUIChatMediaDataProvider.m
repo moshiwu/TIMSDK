@@ -32,11 +32,15 @@
 @implementation TUIChatMediaDataProvider
 
 #pragma mark - Public API
-- (void)selectPhoto {
+- (void)selectPhoto:(BOOL)includeVideo {
     dispatch_async(dispatch_get_main_queue(), ^{
       if (@available(iOS 14.0, *)) {
           PHPickerConfiguration *configuration = [[PHPickerConfiguration alloc] init];
-          configuration.filter = [PHPickerFilter anyFilterMatchingSubfilters:@[ [PHPickerFilter imagesFilter], [PHPickerFilter videosFilter] ]];
+          if (includeVideo) {
+              configuration.filter = [PHPickerFilter anyFilterMatchingSubfilters:@[ [PHPickerFilter imagesFilter], [PHPickerFilter videosFilter] ]];
+          } else {
+              configuration.filter = [PHPickerFilter anyFilterMatchingSubfilters:@[ [PHPickerFilter imagesFilter] ]];
+          }
           configuration.selectionLimit = kTUIChatMediaSelectImageMax;
           PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:configuration];
           picker.delegate = self;
@@ -591,7 +595,7 @@
 }
 
 - (void)cameraViewControllerDidPictureLib:(TUICameraViewController *)controller finishCallback:(void (^)(void))callback {
-    [self selectPhoto];
+    [self selectPhoto:YES];
     if (callback) {
         callback();
     }

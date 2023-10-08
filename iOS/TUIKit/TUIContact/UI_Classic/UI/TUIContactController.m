@@ -10,7 +10,7 @@
 #import <TIMCommon/TIMDefine.h>
 #import <TUICore/TUICore.h>
 #import <TUICore/TUIThemeManager.h>
-#import "ReactiveObjC.h"
+#import <ReactiveObjC/ReactiveObjC.h>
 #import "TUIBlackListController.h"
 #import "TUIContactActionCell.h"
 #import "TUIFindContactViewController.h"

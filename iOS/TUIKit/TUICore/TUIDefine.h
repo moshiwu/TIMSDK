@@ -5,7 +5,6 @@
 #ifndef THeader_h
 #define THeader_h
 
-#import <SDWebImage/SDWebImage.h>
 #import "NSDictionary+TUISafe.h"
 #import "TUICommonModel.h"
 #import "TUIConfig.h"
@@ -17,7 +16,10 @@
 #import "UIView+TUILayout.h"
 #import "UIView+TUIToast.h"
 
+#import <SDWebImage/SDWebImage.h>
+
 @import ImSDK_Plus;
+@import GamaUICommon;
 
 #define tui_weakify(object) \
     autoreleasepool {}         \
@@ -461,15 +463,15 @@ static inline NSBundle *getTUIGetLocalizable(NSString *bundleName) {
 // group member cell
 #define TGroupMemberCell_ReuseId @"TGroupMemberCell"
 #define TGroupMemberCell_Margin 5
-#define TGroupMemberCell_Head_Size CGSizeMake(50, 50)
+#define TGroupMemberCell_Head_Size CGSizeMake(64, 64)
 #define TGroupMemberCell_Name_Height 20
 
 // conversation cell
-#define TConversationCell_Height 72
-#define TConversationCell_Margin 12
-#define TConversationCell_Margin_Text 14
-#define TConversationCell_Margin_Disturb 16
-#define TConversationCell_Margin_Disturb_Dot 10
+#define TConversationCell_Height (80 * wScale)
+#define TConversationCell_Margin (14 * wScale)
+#define TConversationCell_Margin_Text (17 * wScale)
+#define TConversationCell_Margin_Disturb (16 * wScale)
+#define TConversationCell_Margin_Disturb_Dot (10 * wScale)
 
 #define TConversationCell_Height_LiteMode 62
 
@@ -491,8 +493,8 @@ static inline NSBundle *getTUIGetLocalizable(NSString *bundleName) {
 #define TUIPopCell_Padding 12
 
 // unRead
-#define TUnReadView_Margin_TB 2
-#define TUnReadView_Margin_LR 4
+#define TUnReadView_Margin_TB (2 * wScale)
+#define TUnReadView_Margin_LR (4 * wScale)
 
 // message controller
 #define TMessageController_Header_Height 40
@@ -561,7 +563,7 @@ static inline NSBundle *getTUIGetLocalizable(NSString *bundleName) {
 
 // gropu member cell
 #define TGroupMembersCell_ReuseId @"TGroupMembersCell"
-#define TGroupMembersCell_Column_Count 5
+#define TGroupMembersCell_Column_Count 100
 #define TGroupMembersCell_Row_Count 2
 #define TGroupMembersCell_Margin 10
 #define TGroupMembersCell_Image_Size CGSizeMake(60, 60)

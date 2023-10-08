@@ -19,11 +19,12 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol TUIGroupInfoDataProviderDelegate <NSObject>
+- (void)didSelectGroupName;
 - (void)didSelectMembers;
 - (void)didSelectGroupNick:(TUICommonTextCell *)cell;
 - (void)didSelectAddOption:(UITableViewCell *)cell;
 - (void)didSelectCommon;
-- (void)didSelectOnNotDisturb:(TUICommonSwitchCell *)cell;
+- (void)didSelectOnGroupNotification:(TUICommonSwitchCell *)cell;
 - (void)didSelectOnTop:(TUICommonSwitchCell *)cell;
 - (void)didSelectOnFoldConversation:(TUICommonSwitchCell *)cell;
 - (void)didSelectOnChangeBackgroundImage:(TUICommonTextCell *)cell;

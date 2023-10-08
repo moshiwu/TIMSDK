@@ -71,13 +71,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic) BOOL isShowBanner;
 
-/**
- *  是否展示会话分组，如果集成了 TUIConversationGroup 组件，默认会展示
- *  An identifier that identifies whether to display the conversation group, If the TUIConversationGroup component is integrated, it will be displayed by
- * default
- */
-@property(nonatomic) BOOL isShowConversationGroup;
-
 - (void)startConversation:(V2TIMConversationType)type;
 @end
 

@@ -16,7 +16,7 @@ typedef void (^TUIChatMediaDataProviderResultCallback)(BOOL success, NSString *_
 
 @protocol TUIChatMediaDataProtocol <NSObject>
 
-- (void)selectPhoto;
+- (void)selectPhoto:(BOOL)includeVideo;
 - (void)takePicture;
 - (void)takeVideo;
 - (void)selectFile;

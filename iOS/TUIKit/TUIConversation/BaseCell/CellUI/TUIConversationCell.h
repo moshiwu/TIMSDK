@@ -65,7 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
  *  The label for displaying time
  *  Responsible for displaying the received/sent time of the latest message in the conversation unit.
  */
-@property(nonatomic, strong) UILabel *timeLabel;
+//@property(nonatomic, strong) UILabel *timeLabel;
 
 /**
  *  消息免打扰红点
@@ -104,6 +104,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong) UIImageView *onlineStatusIcon;
 
 @property(nonatomic, strong) UIImageView *lastMessageStatusImageView;
+
+/// 官方状态、群组等标记
+@property(nonatomic, strong) UIImageView *tagIconView;
 
 @property(atomic, strong) TUIConversationCellData *convData;
 

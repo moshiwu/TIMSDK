@@ -6,21 +6,9 @@
 //  Copyright © 2023 Tencent. All rights reserved.
 //
 
-#import "TUIBaseChatViewController.h"
-#import <AVFoundation/AVFoundation.h>
-#import <AssetsLibrary/AssetsLibrary.h>
-#import <MobileCoreServices/MobileCoreServices.h>
-#import <Photos/Photos.h>
-#import <TIMCommon/NSString+TUIEmoji.h>
-#import <TIMCommon/TIMDefine.h>
-#import <TUICore/NSDictionary+TUISafe.h>
-#import <TUICore/TUICore.h>
-#import <TUICore/TUILogin.h>
-#import <TUICore/TUIThemeManager.h>
-#import <TUICore/TUITool.h>
-#import <TUICore/NSString+TUIUtil.h>
 #import "ReactiveObjC/ReactiveObjC.h"
 #import "TUIAIDenoiseSignatureManager.h"
+#import "TUIBaseChatViewController.h"
 #import "TUIBaseMessageController.h"
 #import "TUICameraViewController.h"
 #import "TUIChatConfig.h"
@@ -39,6 +27,20 @@
 #import "TUITextMessageCellData.h"
 #import "TUIVideoMessageCellData.h"
 #import "TUIVoiceMessageCellData.h"
+
+#import <AVFoundation/AVFoundation.h>
+#import <AssetsLibrary/AssetsLibrary.h>
+#import <MobileCoreServices/MobileCoreServices.h>
+#import <Photos/Photos.h>
+#import <TIMCommon/NSString+TUIEmoji.h>
+#import <TIMCommon/TIMDefine.h>
+#import <TUICore/NSDictionary+TUISafe.h>
+#import <TUICore/NSString+TUIUtil.h>
+#import <TUICore/TUICore.h>
+#import <TUICore/TUILogin.h>
+#import <TUICore/TUIThemeManager.h>
+#import <TUICore/TUITool.h>
+#import <GamaUICommon/GamaUICommon-umbrella.h>
 
 static UIView *gCustomTopView;
 
@@ -97,7 +99,10 @@ static UIView *gCustomTopView;
     // setupUI
     self.firstAppear = YES;
     self.view.backgroundColor = TIMCommonDynamicColor(@"controller_bg_color", @"#FFFFFF");
-    self.edgesForExtendedLayout = UIRectEdgeNone;
+    
+    self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.extendedLayoutIncludesOpaqueBars = YES;
+    
     [self configBackgroundView];
     [self setupNavigator];
     [self setupMessageController];
@@ -416,7 +421,7 @@ static UIView *gCustomTopView;
 }
 
 - (CGFloat)topMarginByCustomView {
-    return gCustomTopView ? gCustomTopView.mm_h : 0;
+    return (gCustomTopView ? gCustomTopView.mm_h : 0) + X_TOP_NORMAL + 44;
 }
 
 #pragma mark - Event Response
@@ -722,7 +727,7 @@ static UIView *gCustomTopView;
 }
 
 - (void)onSelectPhotoMoreCellData {
-    [self.mediaProvider selectPhoto];
+    [self.mediaProvider selectPhoto:YES];
 }
 
 - (void)onTakePictureMoreCellData {

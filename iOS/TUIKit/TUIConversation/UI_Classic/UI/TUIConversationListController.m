@@ -6,13 +6,20 @@
 //  Copyright © 2023 Tencent. All rights reserved.
 //
 
+#import "TUIConversationCell.h"
 #import "TUIConversationListController.h"
+#import "TUIConversationListDataProvider.h"
+#import "TUIFoldListViewController.h"
+#import "TUIOfflinePushOpenGuideTips.h"
+
+#import <FDFullscreenPopGesture/UINavigationController+FDFullscreenPopGesture.h>
+#import <GamaUICommon/GamaUICommon-Swift.h>
+#import <GamaUICommon/GamaUICommon-umbrella.h>
 #import <TIMCommon/TIMDefine.h>
 #import <TUICore/TUICore.h>
 #import <TUICore/TUIThemeManager.h>
-#import "TUIConversationCell.h"
-#import "TUIConversationListDataProvider.h"
-#import "TUIFoldListViewController.h"
+#import <YYKit/YYKit.h>
+#import <UserNotifications/UserNotifications.h>
 
 #define GroupBtnSpace 24
 #define GroupScrollViewHeight 30
@@ -22,11 +29,14 @@
                                              TUIConversationTableViewDelegate,
                                              TUIPopViewDelegate,
                                              TUINotificationProtocol>
+@property(nonatomic, strong) UIView *customNavigationBar;
 @property(nonatomic, strong) TUINaviBarIndicatorView *titleView;
 @property(nonatomic, strong) TUIConversationListBaseDataProvider *settingDataProvider;
 @property(nonatomic, strong) UIView *tableViewContainer;
 @property(nonatomic, strong) UIView *bannerView;
 @property(nonatomic, assign) CGFloat viewHeight;
+@property(nonatomic, assign) BOOL hasNotificationPermission;
+@property(nonatomic, assign) BOOL manualCloseTips;
 
 @property(nonatomic, assign) BOOL actualShowConversationGroup;
 @property(nonatomic, strong) UIView *groupView;
@@ -42,11 +52,36 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.isShowBanner = YES;
-        self.isShowConversationGroup = YES;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onThemeChanged) name:TUIDidApplyingThemeChangedNotfication object:nil];
     }
     return self;
+}
+
+- (void)checkPushPermission
+{
+    if (self.manualCloseTips) {
+        return;
+    }
+    
+    WeakSelf;
+    [[UNUserNotificationCenter currentNotificationCenter] getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings) {
+        dispatch_async_on_main_queue(^{
+            weakSelf.hasNotificationPermission = settings.authorizationStatus == UNAuthorizationStatusAuthorized;
+            [weakSelf resetBannerView];
+        });
+    }];
+}
+
+- (void)resetBannerView
+{
+    self.bannerView.hidden = self.hasNotificationPermission || self.manualCloseTips;
+    
+    if (self.bannerView.isHidden) {
+        self.tableViewContainer.frame = CGRectMake(0, self.customNavigationBar.mm_maxY, self.view.mm_w, self.viewHeight - self.customNavigationBar.mm_maxY);
+    } else {
+        self.tableViewContainer.frame = CGRectMake(0, self.customNavigationBar.mm_maxY + self.bannerView.height, self.view.mm_w, self.viewHeight - self.customNavigationBar.mm_maxY);
+    }
+    self.tableViewForAll.frame = self.tableViewContainer.bounds;
 }
 
 #pragma mark - NSNotification
@@ -75,6 +110,7 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self.currentTableView reloadData];
+    [self checkPushPermission];
 }
 
 - (void)dealloc {
@@ -83,93 +119,101 @@
 }
 
 - (void)setupNavigation {
-    UIButton *moreButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [moreButton setImage:TIMCommonDynamicImage(@"nav_more_img", [UIImage imageNamed:TIMCommonImagePath(@"more")]) forState:UIControlStateNormal];
-    [moreButton addTarget:self action:@selector(rightBarButtonClick:) forControlEvents:UIControlEventTouchUpInside];
-    moreButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    [moreButton.widthAnchor constraintEqualToConstant:24].active = YES;
-    [moreButton.heightAnchor constraintEqualToConstant:24].active = YES;
-    UIBarButtonItem *moreItem = [[UIBarButtonItem alloc] initWithCustomView:moreButton];
-    self.navigationController.navigationItem.rightBarButtonItem = moreItem;
+    
+    UIView *container = [[UIView alloc] initWithFrame:CGRectMake(0, X_TOP_NORMAL, SCREEN_WIDTH, 62 * wScale)];
+    container.backgroundColor = UIColor.clearColor;
+    [self.view addSubview:container];
+    self.customNavigationBar = container;
+    
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(24 * wScale, 0, SCREEN_WIDTH, 62 * wScale)];
+    label.text = @"loc.message.title".loc;
+    label.font = GFONT_Black(28 * wScale);
+    [container addSubview:label];
+    
+    CGSize btnSize = CGSizeMake(32 * wScale, 32 * wScale);
+    CGSize iconSize = CGSizeMake(20 * wScale, 20 * wScale);
+    
+    UIButton *searchBtn = [[UIButton alloc] initWithFrame:CGRectMake(SCREEN_WIDTH - 136 * wScale, 15 * wScale, btnSize.width, btnSize.height)];
+    [searchBtn setImage:[[UIImage imageNamed:@"icon_message_search"] imageByResizeToSize:iconSize] forState:UIControlStateNormal];
+    [searchBtn addTarget:self action:@selector(searchBtnHandler) forControlEvents:UIControlEventTouchUpInside];
+    searchBtn.backgroundColor = UIColor.gama.styleBackground;
+    searchBtn.layer.cornerRadius = btnSize.height / 2;
+    searchBtn.clipsToBounds = YES;
+    [container addSubview:searchBtn];
+    
+    UIButton *addGroupBtn = [[UIButton alloc] initWithFrame:CGRectMake(SCREEN_WIDTH - 92 * wScale, 15 * wScale, btnSize.width, btnSize.height)];
+    [addGroupBtn setImage:[[UIImage imageNamed:@"icon_message_group"] imageByResizeToSize:iconSize] forState:UIControlStateNormal];
+    [addGroupBtn addTarget:self action:@selector(addGroupBtnHandler) forControlEvents:UIControlEventTouchUpInside];
+    addGroupBtn.backgroundColor = UIColor.gama.styleBackground;
+    addGroupBtn.layer.cornerRadius = btnSize.height / 2;
+    addGroupBtn.clipsToBounds = YES;
+    [container addSubview:addGroupBtn];
+    
+    UIImageView *addGroupTag = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"icon_message_group_plus"]];
+    addGroupTag.frame = CGRectMake(addGroupBtn.right - 10 * wScale, addGroupBtn.top - 2 * wScale, 12 * wScale, 12 * wScale);
+    [container addSubview:addGroupTag];
+    
+    UIButton *notiSettingBtn = [[UIButton alloc] initWithFrame:CGRectMake(SCREEN_WIDTH - 48 * wScale, 15 * wScale, btnSize.width, btnSize.height)];
+    [notiSettingBtn setImage:[[UIImage imageNamed:@"icon_message_notification"] imageByResizeToSize:iconSize] forState:UIControlStateNormal];
+    [notiSettingBtn addTarget:self action:@selector(notificationSettingBtnHandler) forControlEvents:UIControlEventTouchUpInside];
+    notiSettingBtn.backgroundColor = UIColor.gama.styleBackground;
+    notiSettingBtn.layer.cornerRadius = btnSize.height / 2;
+    notiSettingBtn.clipsToBounds = YES;
+    [container addSubview:notiSettingBtn];
+}
 
-    self.navigationController.interactivePopGestureRecognizer.enabled = YES;
-    self.navigationController.interactivePopGestureRecognizer.delegate = self;
+- (void)searchBtnHandler {
+    // TODO: QW 暂时这样写
+    Class cls = NSClassFromString(@"VLEHomeSearchMainVC");
+    id  vc = [[cls alloc] init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+- (void)addGroupBtnHandler {
+    [self startConversation:V2TIM_GROUP];
+}
+
+- (void)notificationSettingBtnHandler {
+    
 }
 
 - (void)rightBarButtonClick:(UIButton *)rightBarButton {
-    NSMutableArray *menus = [NSMutableArray array];
-    TUIPopCellData *friend = [[TUIPopCellData alloc] init];
-
-    friend.image = TUIConversationDynamicImage(@"pop_icon_new_chat_img", [UIImage imageNamed:TUIConversationImagePath(@"new_chat")]);
-    friend.title = TIMCommonLocalizableString(ChatsNewChatText);
-    [menus addObject:friend];
-
-    TUIPopCellData *group = [[TUIPopCellData alloc] init];
-    group.image = TUIConversationDynamicImage(@"pop_icon_new_group_img", [UIImage imageNamed:TUIConversationImagePath(@"new_groupchat")]);
-    group.title = TIMCommonLocalizableString(ChatsNewGroupText);
-    [menus addObject:group];
-
-    CGFloat height = [TUIPopCell getHeight] * menus.count + TUIPopView_Arrow_Size.height;
-    CGFloat orginY = StatusBar_Height + NavBar_Height;
-    TUIPopView *popView = [[TUIPopView alloc] initWithFrame:CGRectMake(Screen_Width - 155, orginY, 145, height)];
-    CGRect frameInNaviView = [self.navigationController.view convertRect:rightBarButton.frame fromView:rightBarButton.superview];
-    popView.arrowPoint = CGPointMake(frameInNaviView.origin.x + frameInNaviView.size.width * 0.5, orginY);
-    popView.delegate = self;
-    [popView setData:menus];
-    [popView showInWindow:self.view.window];
+//    NSMutableArray *menus = [NSMutableArray array];
+//    TUIPopCellData *friend = [[TUIPopCellData alloc] init];
+//
+//    friend.image = TUIConversationDynamicImage(@"pop_icon_new_chat_img", [UIImage imageNamed:TUIConversationImagePath(@"new_chat")]);
+//    friend.title = TIMCommonLocalizableString(ChatsNewChatText);
+//    [menus addObject:friend];
+//
+//    TUIPopCellData *group = [[TUIPopCellData alloc] init];
+//    group.image = TUIConversationDynamicImage(@"pop_icon_new_group_img", [UIImage imageNamed:TUIConversationImagePath(@"new_groupchat")]);
+//    group.title = TIMCommonLocalizableString(ChatsNewGroupText);
+//    [menus addObject:group];
+//
+//    CGFloat height = [TUIPopCell getHeight] * menus.count + TUIPopView_Arrow_Size.height;
+//    CGFloat orginY = StatusBar_Height + NavBar_Height;
+//    TUIPopView *popView = [[TUIPopView alloc] initWithFrame:CGRectMake(Screen_Width - 155, orginY, 145, height)];
+//    CGRect frameInNaviView = [self.navigationController.view convertRect:rightBarButton.frame fromView:rightBarButton.superview];
+//    popView.arrowPoint = CGPointMake(frameInNaviView.origin.x + frameInNaviView.size.width * 0.5, orginY);
+//    popView.delegate = self;
+//    [popView setData:menus];
+//    [popView showInWindow:self.view.window];
 }
 
 - (void)setupViews {
-    self.view.backgroundColor = TUIConversationDynamicColor(@"conversation_bg_color", @"#FFFFFF");
+
+    self.view.backgroundColor = UIColor.gama.styleLightBackground;
+    
+    self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.extendedLayoutIncludesOpaqueBars = YES;
+    self.fd_prefersNavigationBarHidden = YES;
+    
     self.viewHeight = self.view.mm_h;
-    if (self.isShowBanner) {
-        CGSize size = CGSizeMake(self.view.bounds.size.width, 60);
-        self.bannerView.mm_width(size.width).mm_height(60);
-        NSMutableDictionary *param = [NSMutableDictionary dictionary];
-        param[TUICore_TUIConversationExtension_ConversationListBanner_BannerSize] = NSStringFromCGSize(size);
-        param[TUICore_TUIConversationExtension_ConversationListBanner_ModalVC] = self;
-        BOOL result = [TUICore raiseExtension:TUICore_TUIConversationExtension_ConversationListBanner_ClassicExtensionID
-                                   parentView:self.bannerView
-                                        param:param];
-        if (!result) {
-            self.bannerView.mm_height(0);
-        }
-    }
 
     [self.view addSubview:self.tableViewContainer];
     [self.tableViewContainer addSubview:self.tableViewForAll];
 
-    if (self.isShowConversationGroup) {
-        // 延迟点时间加载，等待插件能力位异步加载完毕
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-          NSArray *extensionList = [TUICore getExtensionList:TUICore_TUIConversationExtension_ConversationGroupListBanner_ClassicExtensionID param:nil];
-          @weakify(self);
-          [[[RACObserve(self, actualShowConversationGroup) distinctUntilChanged] skip:0] subscribeNext:^(NSNumber *showConversationGroup) {
-            @strongify(self);
-            if ([showConversationGroup boolValue]) {
-                [self.tableViewContainer setFrame:CGRectMake(0, self.groupView.mm_maxY, self.view.mm_w, self.viewHeight - self.groupView.mm_maxY)];
-
-                self.groupItemList = [NSMutableArray array];
-                [self addGroup:self.allGroupItem];
-
-                for (TUIExtensionInfo *info in extensionList) {
-                    TUIConversationGroupItem *groupItem = info.data[TUICore_TUIConversationExtension_ConversationGroupListBanner_GroupItemKey];
-                    if (groupItem) {
-                        [self addGroup:groupItem];
-                    }
-                }
-                [self onSelectGroup:self.allGroupItem];
-            } else {
-                self.tableViewContainer.frame = CGRectMake(0, self.bannerView.mm_maxY, self.view.mm_w, self.viewHeight - self.bannerView.mm_maxY);
-                self.tableViewForAll.frame = self.tableViewContainer.bounds;
-            }
-          }];
-          self.actualShowConversationGroup = (extensionList.count > 0);
-        });
-    } else {
-        self.tableViewContainer.frame = CGRectMake(0, self.bannerView.mm_maxY, self.view.mm_w, self.viewHeight - self.bannerView.mm_maxY);
-        self.tableViewForAll.frame = self.tableViewContainer.bounds;
-    }
+    [self resetBannerView];
 }
 
 - (TUIConversationGroupItem *)allGroupItem {
@@ -182,7 +226,27 @@
 
 - (UIView *)bannerView {
     if (!_bannerView) {
-        _bannerView = [[UIView alloc] initWithFrame:CGRectMake(0, StatusBar_Height + NavBar_Height, 0, 0)];
+        _bannerView = [[UIView alloc] initWithFrame:CGRectMake(0, X_TOP_NORMAL + 62 * wScale, SCREEN_WIDTH, 78 * wScale)];
+        
+        TUIOfflinePushOpenGuideTips *tipsView = [[TUIOfflinePushOpenGuideTips alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, 70 * wScale)];
+        [_bannerView addSubview:tipsView];
+        
+        WeakSelf;
+        tipsView.onClickClose = ^{
+            weakSelf.manualCloseTips = YES;
+            [weakSelf resetBannerView];
+        };
+        
+        tipsView.onClickConfirm = ^{
+            [weakSelf resetBannerView];
+            NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+            if ([UIApplication.sharedApplication canOpenURL:url]) {
+                [UIApplication.sharedApplication openURL:url options:@{
+                    UIApplicationOpenExternalURLOptionsEventAttributionKey: @1
+                } completionHandler:nil];
+            }
+        };
+        
         [self.view addSubview:_bannerView];
     }
     return _bannerView;
@@ -208,6 +272,8 @@
 - (TUIConversationTableView *)tableViewForAll {
     if (!_tableViewForAll) {
         _tableViewForAll = [[TUIConversationTableView alloc] init];
+        _tableViewForAll.backgroundColor = UIColor.gama.styleLightBackground;
+        _tableViewForAll.separatorStyle = UITableViewCellSelectionStyleNone;
         _tableViewForAll.convDelegate = self;
         _tableViewForAll.tipsMsgWhenNoConversation = [NSString stringWithFormat:TIMCommonLocalizableString(TUIConversationNone), @""];
         if (self.settingDataProvider) {
@@ -222,7 +288,7 @@
 
 - (UIView *)groupView {
     if (!_groupView) {
-        _groupView = [[UIView alloc] initWithFrame:CGRectMake(0, self.bannerView.mm_maxY, self.view.mm_w, 60)];
+        _groupView = [[UIView alloc] initWithFrame:CGRectMake(0, self.customNavigationBar.mm_maxY, self.view.mm_w, 60)];
         [self.view addSubview:_groupView];
 
         CGFloat groupExtensionBtnLeft = _groupView.mm_w - GroupScrollViewHeight - kScale375(16);
@@ -518,30 +584,30 @@
 
 #pragma TUIConversationTableViewDelegate
 - (void)tableViewDidScroll:(CGFloat)offsetY {
-    if (!self.bannerView || self.bannerView.hidden || !self.isShowBanner) {
-        return;
-    }
-    UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
-    if (@available(iOS 11.0, *)) {
-        safeAreaInsets = self.currentTableView.adjustedContentInset;
-    }
-    CGFloat contentSizeHeight = self.currentTableView.contentSize.height + safeAreaInsets.top + safeAreaInsets.bottom;
-    if (contentSizeHeight > self.currentTableView.mm_h && self.currentTableView.contentOffset.y + self.currentTableView.mm_h > contentSizeHeight) {
-        return;
-    }
-    if (offsetY > self.bannerView.mm_h) {
-        offsetY = self.bannerView.mm_h;
-    }
-    if (offsetY < 0) {
-        offsetY = 0;
-    }
-    self.bannerView.mm_top(StatusBar_Height + NavBar_Height - offsetY);
-    if (self.actualShowConversationGroup) {
-        self.groupView.mm_top(self.bannerView.mm_maxY);
-        self.tableViewContainer.mm_top(self.groupView.mm_maxY).mm_height(self.viewHeight - self.groupView.mm_maxY);
-    } else {
-        self.tableViewContainer.mm_top(self.bannerView.mm_maxY).mm_height(self.viewHeight - self.bannerView.mm_maxY);
-    }
+//    if (!self.bannerView || self.bannerView.hidden || YES) {
+//        return;
+//    }
+//    UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
+//    if (@available(iOS 11.0, *)) {
+//        safeAreaInsets = self.currentTableView.adjustedContentInset;
+//    }
+//    CGFloat contentSizeHeight = self.currentTableView.contentSize.height + safeAreaInsets.top + safeAreaInsets.bottom;
+//    if (contentSizeHeight > self.currentTableView.mm_h && self.currentTableView.contentOffset.y + self.currentTableView.mm_h > contentSizeHeight) {
+//        return;
+//    }
+//    if (offsetY > self.bannerView.mm_h) {
+//        offsetY = self.bannerView.mm_h;
+//    }
+//    if (offsetY < 0) {
+//        offsetY = 0;
+//    }
+//    self.bannerView.mm_top(StatusBar_Height + NavBar_Height - offsetY);
+//    if (self.actualShowConversationGroup) {
+//        self.groupView.mm_top(self.bannerView.mm_maxY);
+//        self.tableViewContainer.mm_top(self.groupView.mm_maxY).mm_height(self.viewHeight - self.groupView.mm_maxY);
+//    } else {
+//        self.tableViewContainer.mm_top(self.bannerView.mm_maxY).mm_height(self.viewHeight - self.bannerView.mm_maxY);
+//    }
 }
 
 - (void)tableViewDidSelectCell:(TUIConversationCellData *)data {

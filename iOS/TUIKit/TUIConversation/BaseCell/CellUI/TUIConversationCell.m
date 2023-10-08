@@ -7,32 +7,41 @@
 //
 
 #import "TUIConversationCell.h"
+
 #import <TIMCommon/TIMCommonModel.h>
 #import <TIMCommon/TIMDefine.h>
 #import <TUICore/TUIThemeManager.h>
 #import <TUICore/TUITool.h>
+#import <YYKit/YYKit.h>
 
-#define kScale UIScreen.mainScreen.bounds.size.width / 375.0
+@import GamaUICommon;
 
 @implementation TUIConversationCell
 
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        self.contentView.backgroundColor = TUIConversationDynamicColor(@"conversation_cell_bg_color", @"#FFFFFF");
-
+        
+        self.backgroundColor = UIColor.clearColor;
+        [self setSeparatorInset:UIEdgeInsetsMake(0, TConversationCell_Margin, 0, 0)];
+        [self setSelectionStyle:UITableViewCellSelectionStyleNone];
+        
         _headImageView = [[UIImageView alloc] init];
+        _headImageView.layer.masksToBounds = YES;
         [self.contentView addSubview:_headImageView];
 
-        _timeLabel = [[UILabel alloc] init];
-        _timeLabel.font = [UIFont systemFontOfSize:12];
-        _timeLabel.textColor = TIMCommonDynamicColor(@"form_desc_color", @"#BBBBBB");
-        _timeLabel.layer.masksToBounds = YES;
-        [self.contentView addSubview:_timeLabel];
+        _tagIconView = [[UIImageView alloc] init];
+        [self.contentView addSubview:_tagIconView];
+
+//        _timeLabel = [[UILabel alloc] init];
+//        _timeLabel.font = [UIFont systemFontOfSize:12];
+//        _timeLabel.textColor = TIMCommonDynamicColor(@"form_desc_color", @"#BBBBBB");
+//        _timeLabel.layer.masksToBounds = YES;
+//        [self.contentView addSubview:_timeLabel];
 
         _titleLabel = [[UILabel alloc] init];
-        _titleLabel.font = [UIFont systemFontOfSize:16];
-        _titleLabel.textColor = TIMCommonDynamicColor(@"form_title_color", @"#000000");
+        _titleLabel.font = GFONT_Bold(16 * wScale);
+        _titleLabel.textColor = UIColor.gama.text;
         _titleLabel.layer.masksToBounds = YES;
         [self.contentView addSubview:_titleLabel];
 
@@ -41,8 +50,8 @@
 
         _subTitleLabel = [[UILabel alloc] init];
         _subTitleLabel.layer.masksToBounds = YES;
-        _subTitleLabel.font = [UIFont systemFontOfSize:14];
-        _subTitleLabel.textColor = TIMCommonDynamicColor(@"form_subtitle_color", @"#888888");
+        _subTitleLabel.font = GFONT_Medium(14 * wScale);
+        _subTitleLabel.textColor = UIColor.gama.lightText;
         [self.contentView addSubview:_subTitleLabel];
 
         _notDisturbRedDot = [[UIView alloc] init];
@@ -54,16 +63,12 @@
         _notDisturbView = [[UIImageView alloc] init];
         [self.contentView addSubview:_notDisturbView];
 
-        [self setSeparatorInset:UIEdgeInsetsMake(0, TConversationCell_Margin, 0, 0)];
-
-        [self setSelectionStyle:UITableViewCellSelectionStyleNone];
-        //[self setSelectionStyle:UITableViewCellSelectionStyleDefault];
-
         // selectedIcon
         _selectedIcon = [[UIImageView alloc] init];
         [self.contentView addSubview:_selectedIcon];
 
         _onlineStatusIcon = [[UIImageView alloc] init];
+        _onlineStatusIcon.image = [[UIImage imageWithColor:UIColor.gama.green size:CGSizeMake(12 * wScale, 12 * wScale)] imageByRoundCornerRadius:6 * wScale];
         [self.contentView addSubview:_onlineStatusIcon];
 
         _lastMessageStatusImageView = [[UIImageView alloc] init];
@@ -75,24 +80,15 @@
 - (void)fillWithData:(TUIConversationCellData *)convData {
     self.convData = convData;
 
-    self.timeLabel.text = [TUITool convertDateToStr:convData.time];
+//    self.timeLabel.text = [TUITool convertDateToStr:convData.time];
     self.subTitleLabel.attributedText = convData.subTitle;
 
     [self configRedPoint:convData];
 
     if (convData.isOnTop) {
-        self.contentView.backgroundColor = TUIConversationDynamicColor(@"conversation_cell_top_bg_color", @"#F4F4F4");
+//        self.contentView.backgroundColor = TUIConversationDynamicColor(@"conversation_cell_top_bg_color", @"#F4F4F4");
     } else {
-        self.contentView.backgroundColor = TUIConversationDynamicColor(@"conversation_cell_bg_color", @"#FFFFFF");
-        ;
-    }
-
-    if ([TUIConfig defaultConfig].avatarType == TAvatarTypeRounded) {
-        self.headImageView.layer.masksToBounds = YES;
-        self.headImageView.layer.cornerRadius = self.headImageView.frame.size.height / 2;
-    } else if ([TUIConfig defaultConfig].avatarType == TAvatarTypeRadiusCorner) {
-        self.headImageView.layer.masksToBounds = YES;
-        self.headImageView.layer.cornerRadius = [TUIConfig defaultConfig].avatarCornerRadius;
+        self.contentView.backgroundColor = UIColor.clearColor;
     }
 
     @weakify(self);
@@ -266,19 +262,17 @@
 - (void)configOnlineStatusIcon:(TUIConversationCellData *)convData {
     @weakify(self);
     [[RACObserve(TUIConfig.defaultConfig, displayOnlineStatusIcon) takeUntil:self.rac_prepareForReuseSignal] subscribeNext:^(id _Nullable x) {
-      @strongify(self);
-      if (convData.onlineStatus == TUIConversationOnlineStatusOnline && TUIConfig.defaultConfig.displayOnlineStatusIcon) {
-          self.onlineStatusIcon.hidden = NO;
-          self.onlineStatusIcon.image = TIMCommonDynamicImage(@"icon_online_status", [UIImage imageNamed:TIMCommonImagePath(@"icon_online_status")]);
-      } else if (convData.onlineStatus == TUIConversationOnlineStatusOffline && TUIConfig.defaultConfig.displayOnlineStatusIcon) {
-          self.onlineStatusIcon.hidden = NO;
-          self.onlineStatusIcon.image = TIMCommonDynamicImage(@"icon_offline_status", [UIImage imageNamed:TIMCommonImagePath(@"icon_offline_status")]);
-      } else {
-          self.onlineStatusIcon.hidden = YES;
-          self.onlineStatusIcon.image = nil;
-      }
+        @strongify(self);
+        if (convData.onlineStatus == TUIConversationOnlineStatusOnline && TUIConfig.defaultConfig.displayOnlineStatusIcon) {
+            self.onlineStatusIcon.hidden = NO;
+//        } else if (convData.onlineStatus == TUIConversationOnlineStatusOffline && TUIConfig.defaultConfig.displayOnlineStatusIcon) {
+//            self.onlineStatusIcon.hidden = NO;
+        } else {
+            self.onlineStatusIcon.hidden = YES;
+        }
     }];
 }
+
 - (void)configRedPoint:(TUIConversationCellData *)convData {
     if (convData.isNotDisturb) {
         if (0 == convData.unreadCount) {
@@ -324,7 +318,7 @@
     CGFloat height = [self.convData heightOfWidth:self.mm_w];
     self.mm_h = height;
 
-    CGFloat selectedIconSize = 20;
+    CGFloat selectedIconSize = 20 * wScale;
     if (self.convData.showCheckBox) {
         _selectedIcon.mm_width(selectedIconSize).mm_height(selectedIconSize);
         _selectedIcon.mm_x = 10;
@@ -340,21 +334,24 @@
     CGFloat imgHeight = height - 2 * (TConversationCell_Margin);
     CGFloat margin = self.convData.showCheckBox ? _selectedIcon.mm_maxX : 0;
     self.headImageView.mm_width(imgHeight).mm_height(imgHeight).mm_left(TConversationCell_Margin + 3 + margin).mm_top(TConversationCell_Margin);
-    if ([TUIConfig defaultConfig].avatarType == TAvatarTypeRounded) {
-        self.headImageView.layer.masksToBounds = YES;
+    
+    if (self.convData.groupID == nil) {
+        self.tagIconView.hidden = YES;
         self.headImageView.layer.cornerRadius = imgHeight / 2;
-    } else if ([TUIConfig defaultConfig].avatarType == TAvatarTypeRadiusCorner) {
-        self.headImageView.layer.masksToBounds = YES;
-        self.headImageView.layer.cornerRadius = [TUIConfig defaultConfig].avatarCornerRadius;
+    } else {
+        self.tagIconView.hidden = NO;
+        self.tagIconView.image = [[UIImage imageNamed:@"icon_message_group_tag"] imageByResizeToSize:CGSizeMake(20 * wScale, 20 * wScale)];
+        [self.tagIconView sizeToFit];
+        self.headImageView.layer.cornerRadius = 12 * wScale;
     }
 
-    CGFloat titleLabelHeight = 30;
+    CGFloat titleLabelHeight = 20 * wScale;
     if (self.convData.isLiteMode) {
-        self.titleLabel.mm_sizeToFitThan(120, titleLabelHeight)
+        self.titleLabel.mm_sizeToFitThan(120 * wScale, titleLabelHeight)
             .mm_top((height - titleLabelHeight) / 2)
             .mm_left(self.headImageView.mm_maxX + TConversationCell_Margin)
             .mm_flexToRight(2 * TConversationCell_Margin_Text);
-        self.timeLabel.hidden = YES;
+//        self.timeLabel.hidden = YES;
         self.lastMessageStatusImageView.hidden = YES;
         self.subTitleLabel.hidden = YES;
         self.unReadView.hidden = YES;
@@ -362,29 +359,47 @@
         self.notDisturbView.hidden = YES;
         self.onlineStatusIcon.hidden = YES;
     } else {
-        self.timeLabel.mm_sizeToFit().mm_top(TConversationCell_Margin_Text).mm_right(TConversationCell_Margin + 4);
-        self.lastMessageStatusImageView.mm_width(kScale390(14))
-            .mm_height(14)
-            .mm_bottom(kScale390(16))
-            .mm_right(kScale390(1) + TConversationCell_Margin_Disturb + kScale390(8));
-        self.titleLabel.mm_sizeToFitThan(120, titleLabelHeight)
-            .mm_top(TConversationCell_Margin_Text - 5)
-            .mm_left(self.headImageView.mm_maxX + TConversationCell_Margin)
-            .mm_flexToRight(self.timeLabel.mm_w + 2 * TConversationCell_Margin_Text);
-        self.subTitleLabel.mm_sizeToFit()
+//        self.timeLabel.hidden = YES; // TODO: QW 待确认
+//        self.timeLabel.mm_sizeToFit().mm_top(TConversationCell_Margin_Text).mm_right(TConversationCell_Margin + 4 * wScale);
+
+        self.unReadView.mm_right(TConversationCell_Margin_Text).mm__centerY(self.height / 2);
+        CGFloat unReadViewMargin = self.unReadView.mm_w + TConversationCell_Margin_Text + TConversationCell_Margin;
+
+        self.lastMessageStatusImageView.mm_width(14 * wScale)
+            .mm_height(14 * wScale)
+            .mm_bottom(16 * wScale)
+            .mm_right(1 + TConversationCell_Margin_Disturb + 8 * wScale);
+        
+        self.titleLabel
+            .mm_sizeToFitThan(0 * wScale, titleLabelHeight)
+            .mm_top(TConversationCell_Margin_Text)
+            .mm_left(self.headImageView.mm_maxX + TConversationCell_Margin);
+        
+        self.subTitleLabel.mm_sizeToFitLessOrEqual(self.mm_w - self.titleLabel.mm_x - unReadViewMargin, titleLabelHeight)
             .mm_left(self.titleLabel.mm_x)
-            .mm_bottom(TConversationCell_Margin_Text)
-            .mm_flexToRight(2 * TConversationCell_Margin_Text);
-        self.unReadView.mm_right(self.headImageView.mm_r - 5).mm_top(self.headImageView.mm_y - 5);
+            .mm_bottom(TConversationCell_Margin_Text);
+        
+        if (!self.tagIconView.isHidden) {
+            self.tagIconView
+                .mm_left(self.titleLabel.mm_maxX + 4 * wScale)
+                .mm__centerY(self.titleLabel.mm_centerY);
+        }
+        
         self.notDisturbRedDot.mm_width(TConversationCell_Margin_Disturb_Dot)
             .mm_height(TConversationCell_Margin_Disturb_Dot)
-            .mm_right(self.headImageView.mm_r - 3)
-            .mm_top(self.headImageView.mm_y - 3);
-        self.notDisturbView.mm_width(TConversationCell_Margin_Disturb).mm_height(TConversationCell_Margin_Disturb).mm_right(16).mm_bottom(15);
+            .mm_right(TConversationCell_Margin_Text)
+            .mm__centerY(self.height / 2);
+        
+        self.notDisturbView
+            .mm_width(TConversationCell_Margin_Disturb)
+            .mm_height(TConversationCell_Margin_Disturb)
+            .mm__centerY(self.subTitleLabel.mm_centerY)
+            .mm_left(self.subTitleLabel.mm_maxX + 4 * wScale);
 
-        self.onlineStatusIcon.mm_width(kScale * 15).mm_height(kScale * 15);
-        self.onlineStatusIcon.mm_x = CGRectGetMaxX(self.headImageView.frame) - 0.5 * self.onlineStatusIcon.mm_w - 3 * kScale;
-        self.onlineStatusIcon.mm_y = CGRectGetMaxY(self.headImageView.frame) - self.onlineStatusIcon.mm_w;
+        
+        self.onlineStatusIcon.mm_width(12 * wScale).mm_height(12 * wScale);
+        self.onlineStatusIcon.mm_x = CGRectGetMaxX(self.headImageView.frame) - self.onlineStatusIcon.mm_w;
+        self.onlineStatusIcon.mm_y = CGRectGetMinY(self.headImageView.frame);
         self.onlineStatusIcon.layer.cornerRadius = 0.5 * self.onlineStatusIcon.mm_w;
     }
 }

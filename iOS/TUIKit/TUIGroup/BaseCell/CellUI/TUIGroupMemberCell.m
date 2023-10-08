@@ -66,10 +66,11 @@
 
 + (CGSize)getSize {
     CGSize headSize = TGroupMemberCell_Head_Size;
-    if (headSize.width * TGroupMembersCell_Column_Count + TGroupMembersCell_Margin * (TGroupMembersCell_Column_Count + 1) > Screen_Width) {
-        CGFloat wd = (Screen_Width - (TGroupMembersCell_Margin * (TGroupMembersCell_Column_Count + 1))) / TGroupMembersCell_Column_Count;
-        headSize = CGSizeMake(wd, wd);
-    }
-    return CGSizeMake(headSize.width, headSize.height + TGroupMemberCell_Name_Height + TGroupMemberCell_Margin);
+    return CGSizeMake(headSize.width, headSize.height + TGroupMemberCell_Name_Height);
+//    if (headSize.width * TGroupMembersCell_Column_Count + TGroupMembersCell_Margin * (TGroupMembersCell_Column_Count + 1) > Screen_Width) {
+//        CGFloat wd = (Screen_Width - (TGroupMembersCell_Margin * (TGroupMembersCell_Column_Count + 1))) / TGroupMembersCell_Column_Count;
+//        headSize = CGSizeMake(wd, wd);
+//    }
+//    return CGSizeMake(headSize.width, headSize.height + TGroupMemberCell_Name_Height + TGroupMemberCell_Margin);
 }
 @end

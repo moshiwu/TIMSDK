@@ -182,6 +182,7 @@ typedef enum : NSUInteger {
     ButtonWhite,
     ButtonRedText,
     ButtonBule,
+    ButtonGama,
 } TUIButtonStyle;
 
 @interface TUIButtonCellData : TUICommonCellData

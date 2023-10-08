@@ -58,4 +58,5 @@
 
 - (UIView * (^)(void))mm_sizeToFit;
 - (UIView * (^)(CGFloat w, CGFloat h))mm_sizeToFitThan;
+- (UIView * (^)(CGFloat w, CGFloat h))mm_sizeToFitLessOrEqual;
 @end

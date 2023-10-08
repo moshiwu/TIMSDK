@@ -8,6 +8,8 @@
 
 #import "TIMCommonModel.h"
 
+@import GamaUICommon;
+
 /////////////////////////////////////////////////////////////////////////////////
 //
 //                           TUIPopView
@@ -486,11 +488,11 @@
 @implementation TUICommonCellData
 
 - (CGFloat)heightOfWidth:(CGFloat)width {
-    return 60;
+    return 72;
 }
 
 - (CGFloat)estimatedHeight {
-    return 60;
+    return 72;
 }
 
 @end
@@ -581,11 +583,11 @@
 
         _keyLabel = self.textLabel;
         _keyLabel.textColor = TIMCommonDynamicColor(@"form_key_text_color", @"#444444");
-        _keyLabel.font = [UIFont systemFontOfSize:16.0];
+        _keyLabel.font = GFONT_Bold(14);
 
         _valueLabel = self.detailTextLabel;
         _valueLabel.textColor = TIMCommonDynamicColor(@"form_value_text_color", @"#000000");
-        _valueLabel.font = [UIFont systemFontOfSize:16.0];
+        _valueLabel.font = GFONT_Medium(14);
 
         self.selectionStyle = UITableViewCellSelectionStyleNone;
     }
@@ -974,7 +976,7 @@
     self.contentView.backgroundColor = TIMCommonDynamicColor(@"form_bg_color", @"#FFFFFF");
 
     _button = [UIButton buttonWithType:UIButtonTypeCustom];
-    [_button.titleLabel setFont:[UIFont systemFontOfSize:18]];
+    [_button.titleLabel setFont:GFONT_SemiBold(18)];
     [_button addTarget:self action:@selector(onClick:) forControlEvents:UIControlEventTouchUpInside];
 
     [self.contentView addSubview:_button];
@@ -1015,6 +1017,10 @@
             [_button setBackgroundImage:[self imageWithColor:TIMCommonDynamicColor(@"form_blue_button_highlight_bg_color", @"#1978D5")]
                                forState:UIControlStateHighlighted];
         } break;
+        case ButtonGama: {
+            [_button.titleLabel setTextColor:TIMCommonDynamicColor(@"form_white_button_text_color", @"#000000")];
+        } break;
+        
         default:
             break;
     }
@@ -1028,7 +1034,14 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    _button.mm_width(Screen_Width - 2 * TButtonCell_Margin).mm_height(self.mm_h - TButtonCell_Margin).mm_left(TButtonCell_Margin);
+    if (self.buttonData.style == ButtonGama) {
+        _button.mm_width(Screen_Width - 2 * 32).mm_height(self.mm_h).mm_left(32);
+        _button.layer.cornerRadius = self.mm_h / 2;
+        _button.layer.borderColor = UIColor.whiteColor.CGColor;
+        _button.layer.borderWidth = 1;
+    } else {
+        _button.mm_width(Screen_Width - 2 * TButtonCell_Margin).mm_height(self.mm_h - TButtonCell_Margin).mm_left(TButtonCell_Margin);
+    }
 
     _line.mm_width(Screen_Width).mm_height(0.2).mm_left(20).mm_bottom(0);
 }
@@ -1149,7 +1162,7 @@
 - (void)setupViews {
     _unReadLabel = [[UILabel alloc] init];
     _unReadLabel.text = @"11";
-    _unReadLabel.font = [UIFont systemFontOfSize:12];
+    _unReadLabel.font = GFONT_Black(12 * wScale);
     _unReadLabel.textColor = [UIColor whiteColor];
     _unReadLabel.textAlignment = NSTextAlignmentCenter;
     [_unReadLabel sizeToFit];

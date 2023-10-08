@@ -11,7 +11,7 @@
 #import <TUICore/TUIThemeManager.h>
 #import <TUICore/UIView+TUILayout.h>
 #import "TUIMemberInfoCellData.h"
-#import "UIImageView+WebCache.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 
 #define kScale UIScreen.mainScreen.bounds.size.width / 375.0
 @implementation TUIMemberTagView : UIView

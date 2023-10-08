@@ -569,6 +569,7 @@
         return;
     }
 
+    // TODO: QW IM在线状态换自己的？
     // get
     @weakify(self);
     [V2TIMManager.sharedInstance getUserStatus:userIDList
@@ -578,9 +579,9 @@
         }
         fail:^(int code, NSString *desc) {
 #if DEBUG
-          if (code == ERR_SDK_INTERFACE_NOT_SUPPORT && TUIConfig.defaultConfig.displayOnlineStatusIcon) {
-              [TUITool makeToast:desc];
-          }
+//          if (code == ERR_SDK_INTERFACE_NOT_SUPPORT && TUIConfig.defaultConfig.displayOnlineStatusIcon) {
+//              [TUITool makeToast:desc];
+//          }
 #endif
         }];
 

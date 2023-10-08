@@ -7,7 +7,7 @@
 //
 #import "TUISearchFriendViewController.h"
 #import <TUICore/TUIThemeManager.h>
-#import "TUIDefine.h"
+#import <TUICore/TUIDefine.h>
 #import "TUIFriendRequestViewController.h"
 
 @interface AddFriendUserView : UIView

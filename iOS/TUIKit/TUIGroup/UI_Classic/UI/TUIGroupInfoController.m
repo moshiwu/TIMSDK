@@ -22,7 +22,7 @@
 
 @interface TUIGroupInfoController () <TUIModifyViewDelegate, TUIGroupMembersCellDelegate, TUIProfileCardDelegate, TUIGroupInfoDataProviderDelegate>
 @property(nonatomic, strong) TUIGroupInfoDataProvider *dataProvider;
-@property(nonatomic, strong) TUINaviBarIndicatorView *titleView;
+//@property(nonatomic, strong) TUINaviBarIndicatorView *titleView;
 @property(nonatomic, strong) UIViewController *showContactSelectVC;
 @property NSInteger tag;
 @end
@@ -42,15 +42,15 @@
       [self.tableView reloadData];
     }];
 
-    _titleView = [[TUINaviBarIndicatorView alloc] init];
-    self.navigationItem.titleView = _titleView;
-    self.navigationItem.title = @"";
-    [_titleView setTitle:TIMCommonLocalizableString(ProfileDetails)];
+//    _titleView = [[TUINaviBarIndicatorView alloc] init];
+//    self.navigationItem.titleView = _titleView;
+    self.navigationItem.title = @"loc.message.label_group_title".loc;
+//    [_titleView setTitle:TIMCommonLocalizableString(ProfileDetails)];
 }
 
 - (void)setupViews {
     self.tableView.tableFooterView = [[UIView alloc] init];
-    self.tableView.backgroundColor = TIMCommonDynamicColor(@"controller_bg_color", @"#F2F3F5");
+    self.tableView.backgroundColor = UIColor.gama.styleLightBackground;
     self.tableView.delaysContentTouches = NO;
     if (@available(iOS 15.0, *)) {
         self.tableView.sectionHeaderTopPadding = 0;
@@ -78,7 +78,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return 10;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -94,15 +94,13 @@
     } else if ([data isKindOfClass:[TUIGroupMembersCellData class]]) {
         return [TUIGroupMembersCell getHeight:(TUIGroupMembersCellData *)data];
     } else if ([data isKindOfClass:[TUIButtonCellData class]]) {
-        return [(TUIButtonCellData *)data heightOfWidth:Screen_Width];
-        ;
+        return 52.0;
     } else if ([data isKindOfClass:[TUICommonSwitchCellData class]]) {
         return [(TUICommonSwitchCellData *)data heightOfWidth:Screen_Width];
-        ;
     } else if ([data isKindOfClass:TUIGroupNoticeCellData.class]) {
         return 72.0;
     }
-    return 44;
+    return 72.0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -283,12 +281,12 @@
     [self presentViewController:ac animated:YES completion:nil];
 }
 
-- (void)didSelectOnNotDisturb:(TUICommonSwitchCell *)cell {
+- (void)didSelectOnGroupNotification:(TUICommonSwitchCell *)cell {
     V2TIMReceiveMessageOpt opt;
     if (cell.switcher.on) {
-        opt = V2TIM_RECEIVE_NOT_NOTIFY_MESSAGE;
-    } else {
         opt = V2TIM_RECEIVE_MESSAGE;
+    } else {
+        opt = V2TIM_RECEIVE_NOT_NOTIFY_MESSAGE;
     }
     @weakify(self);
     [V2TIMManager.sharedInstance markConversation:@[ [NSString stringWithFormat:@"group_%@", self.groupId] ]

@@ -28,10 +28,10 @@
 
     CGSize cellSize = [TUIGroupMemberCell getSize];
     _memberFlowLayout.itemSize = cellSize;
-    _memberFlowLayout.minimumInteritemSpacing =
-        (Screen_Width - cellSize.width * TGroupMembersCell_Column_Count - 2 * 20) / (TGroupMembersCell_Column_Count - 1);
-    _memberFlowLayout.minimumLineSpacing = TGroupMembersCell_Margin;
+    _memberFlowLayout.minimumInteritemSpacing = 16 * wScale;
+    _memberFlowLayout.minimumLineSpacing = 16 * wScale;
     _memberFlowLayout.sectionInset = UIEdgeInsetsMake(TGroupMembersCell_Margin, 20, TGroupMembersCell_Margin, 20);
+    _memberFlowLayout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
 
     _memberCollectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:_memberFlowLayout];
     [_memberCollectionView registerClass:[TUIGroupMemberCell class] forCellWithReuseIdentifier:TGroupMemberCell_ReuseId];
@@ -89,9 +89,7 @@
     }
 }
 
-- (CGSize)collectionView:(UICollectionView *)collectionView
-                    layout:(UICollectionViewLayout *)collectionViewLayout
-    sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
     return [TUIGroupMemberCell getSize];
 }
 @end
